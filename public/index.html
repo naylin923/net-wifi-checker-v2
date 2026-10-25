@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="my">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NET WiFi Voucher Check</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;color:#182338;background:#f3f6fb}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:22px}
+.card{width:min(100%,480px);background:white;border:1px solid #e1e8f2;border-radius:22px;padding:28px;box-shadow:0 16px 50px #19355a12}
+.brand{font-size:13px;font-weight:800;letter-spacing:2px;color:#1769d2}.dot{display:inline-block;width:8px;height:8px;background:#21b573;border-radius:50%;margin-right:7px}
+h1{font-size:28px;margin:12px 0 6px}p{color:#66758b;line-height:1.6;margin:0 0 20px}
+label{font-size:14px;font-weight:700;display:block;margin:0 0 8px}
+input{width:100%;padding:15px 14px;border:1px solid #cdd8e6;border-radius:12px;font-size:16px;outline:none}
+input:focus{border-color:#1769d2;box-shadow:0 0 0 3px #1769d21a}
+button{width:100%;border:0;background:#1769d2;color:white;font-weight:700;font-size:16px;padding:15px;border-radius:12px;margin-top:12px;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}.result{display:none;margin-top:18px;padding:15px;border-radius:12px;background:#f2f6fc;line-height:1.6;overflow-wrap:anywhere}
+.result.show{display:block}.result strong{display:block;font-size:17px;margin-bottom:4px}.good{background:#eaf8f0;color:#17663b}.bad{background:#fff2e8;color:#8a4300}.muted{font-size:12px;color:#8a97a8;text-align:center;margin-top:22px}
+</style></head>
+<body><main class="card">
+<div class="brand"><span class="dot"></span>NET WIFI</div>
+<h1>Voucher စစ်ဆေးရန်</h1>
+<p>သင့် Voucher Code ကို အောက်တွင်ထည့်ပြီး အခြေအနေကို စစ်ဆေးနိုင်ပါသည်။</p>
+<form id="checkForm"><label for="code">Voucher Code</label><input id="code" name="code" autocomplete="off" required maxlength="120" placeholder="ဥပမာ - NET-XXXX-XXXX"><button id="submit" type="submit">အခြေအနေ စစ်ဆေးမည်</button></form>
+<div id="result" class="result" role="status" aria-live="polite"></div>
+<div class="muted">NET WiFi Voucher Status Checker</div>
+</main>
+<script>
+const form=document.querySelector('#checkForm'),btn=document.querySelector('#submit'),out=document.querySelector('#result');
+const labels={active:'အသုံးပြုနိုင်သည်',used:'အသုံးပြုပြီး',expired:'သက်တမ်းကုန်ဆုံးပြီ',disabled:'ပိတ်ထားသည်'};
+form.addEventListener('submit',async e=>{
+ e.preventDefault(); const code=document.querySelector('#code').value.trim(); if(!code)return;
+ btn.disabled=true;btn.textContent='စစ်ဆေးနေသည်…';out.className='result show';out.textContent='ခဏစောင့်ပါ…';
+ try{
+  const r=await fetch('/api/check?code='+encodeURIComponent(code),{headers:{'Accept':'application/json'}});
+  const d=await r.json(); if(!r.ok)throw new Error(d.error||'စစ်ဆေး၍မရပါ');
+  if(!d.found){out.className='result show bad';out.innerHTML='<strong>Voucher မတွေ့ပါ</strong> Code ကို ပြန်စစ်ပြီး ထပ်မံကြိုးစားပါ။';}
+  else {const status=labels[d.status]||d.status||'အခြေအနေမသိ';out.className='result show '+(d.status==='active'?'good':'bad');
+   out.innerHTML='<strong>'+status+'</strong>'+(d.period?'<div>Package / ကာလ: '+escapeHtml(d.period)+'</div>':'')+(d.expired_at?'<div>သက်တမ်းကုန်ဆုံးရက်: '+escapeHtml(d.expired_at)+'</div>':'')+'<div>Voucher: '+escapeHtml(d.code)+'</div>';
+  }
+ }catch(err){out.className='result show bad';out.textContent=err.message||'ချိတ်ဆက်မှု အမှားဖြစ်နေပါသည်။ နောက်မှ ထပ်ကြိုးစားပါ။';}
+ finally{btn.disabled=false;btn.textContent='အခြေအနေ စစ်ဆေးမည်';}
+});
+function escapeHtml(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+</script></body></html>

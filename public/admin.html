@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="my"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NET WiFi Admin</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:22px;background:#f3f6fb;color:#182338;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}.wrap{max-width:780px;margin:auto}.top,.panel{background:white;border:1px solid #e1e8f2;border-radius:18px;padding:22px;margin-bottom:16px}.brand{color:#1769d2;font-weight:800;letter-spacing:1px}h1{margin:8px 0}p{color:#68778d;line-height:1.55}h2{font-size:19px;margin:0 0 16px}label{display:block;font-weight:650;font-size:14px;margin:12px 0 6px}input,select{width:100%;padding:12px;border:1px solid #cdd8e6;border-radius:10px;font-size:15px;background:white}button{border:0;background:#1769d2;color:white;font-weight:700;padding:12px 16px;border-radius:10px;margin-top:14px;cursor:pointer}button.secondary{background:#26364d}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.msg{padding:12px;border-radius:10px;background:#eef4fc;margin-top:12px;display:none;white-space:pre-wrap}.msg.show{display:block}.small{font-size:12px;color:#77859a}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+</style></head><body><div class="wrap">
+<header class="top"><div class="brand">NET WIFI · ADMIN</div><h1>Voucher စီမံခန့်ခွဲမှု</h1><p>Manual ထည့်ခြင်းနှင့် CSV ဖြင့် အများအပြားထည့်ခြင်း။ Admin Token ကို Cloudflare ထဲတွင် သတ်မှတ်ထားသော တန်ဖိုးအတိုင်း ထည့်ပါ။</p>
+<label for="token">Admin Token</label><input id="token" type="password" autocomplete="current-password" placeholder="ADMIN_TOKEN" required><div class="small">Token ကို အခြားသူများနှင့် မမျှဝေပါနှင့်။</div></header>
+<section class="panel"><h2>Voucher တစ်ခု ထည့်ရန်</h2><form id="addForm">
+<label for="code">Voucher Code *</label><input id="code" required maxlength="120" placeholder="NET-XXXX-XXXX">
+<div class="grid"><div><label for="status">အခြေအနေ</label><select id="status"><option value="active">အသုံးပြုနိုင်သည် (active)</option><option value="used">အသုံးပြုပြီး (used)</option><option value="expired">သက်တမ်းကုန် (expired)</option><option value="disabled">ပိတ်ထားသည် (disabled)</option></select></div><div><label for="period">Package / ကာလ</label><input id="period" placeholder="ဥပမာ - 1 Day / 10 GB"></div></div>
+<label for="expired">သက်တမ်းကုန်ဆုံးရက် (optional)</label><input id="expired" placeholder="YYYY-MM-DD">
+<button id="addBtn">Voucher ထည့်မည်</button></form><div id="addMsg" class="msg"></div></section>
+<section class="panel"><h2>CSV ဖိုင်ဖြင့် Import လုပ်ရန်</h2><p>CSV column အစီအစဉ်: <code>code,status,period,expired_at</code>။ Header row ပါလျှင်လည်း ရပါသည်။</p>
+<form id="importForm"><label for="csv">CSV ဖိုင်ရွေးပါ</label><input id="csv" type="file" accept=".csv,text/csv" required><button class="secondary" id="importBtn">CSV Import လုပ်မည်</button></form><div id="importMsg" class="msg"></div>
+<p class="small">Status တန်ဖိုးများ: active, used, expired, disabled. ရှိပြီးသား code တူလျှင် အချက်အလက်ကို update လုပ်မည်။</p></section>
+<p><a href="/">← Voucher စစ်ဆေးသည့်စာမျက်နှာသို့ ပြန်ရန်</a></p></div>
+<script>
+const token=()=>document.querySelector('#token').value.trim();
+async function showRequest(url,options,msgId,btnId){const msg=document.getElementById(msgId),btn=document.getElementById(btnId);msg.className='msg show';msg.textContent='လုပ်ဆောင်နေသည်…';btn.disabled=true;try{const r=await fetch(url,{...options,headers:{...(options.headers||{}),'Authorization':'Bearer '+token()}});const d=await r.json();if(!r.ok)throw new Error(d.error||'လုပ်ဆောင်မှု မအောင်မြင်ပါ');msg.textContent=d.message||'အောင်မြင်ပါသည်။';}catch(e){msg.textContent='အမှား: '+(e.message||'မအောင်မြင်ပါ');}finally{btn.disabled=false;}}
+document.querySelector('#addForm').addEventListener('submit',e=>{e.preventDefault();if(!token()){alert('Admin Token ထည့်ပါ။');return;}showRequest('/api/add',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({code:document.querySelector('#code').value.trim(),status:document.querySelector('#status').value,period:document.querySelector('#period').value.trim(),expired_at:document.querySelector('#expired').value.trim()})},'addMsg','addBtn');});
+document.querySelector('#importForm').addEventListener('submit',e=>{e.preventDefault();if(!token()){alert('Admin Token ထည့်ပါ။');return;}const file=document.querySelector('#csv').files[0];if(!file)return;const fd=new FormData();fd.append('file',file);showRequest('/api/import',{method:'POST',body:fd},'importMsg','importBtn');});
+</script></body></html>
